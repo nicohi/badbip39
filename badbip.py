@@ -1,5 +1,4 @@
 # Translates arbitrary ascii data into bip39-formatted word list.
-#
 # Wordlist: https://github.com/bitcoin/bips/blob/master/bip-0039/english.txt
 import sys
 
@@ -27,21 +26,25 @@ def numberToBase(n, b):
         n //= b
     return digits[::-1]
 
+def toInteger(numbers, base):
+    r = 0
+    for i,n in enumerate(numbers):
+        r = r * base + n
+    return r
 
 def toBIP(text):
     words = readWords()
     bs = bytes(text, "ascii")
-    bs = [b & 0b1111111 for b in bs]
     data = int.from_bytes(bs, "little")
     bip39 = [words[d] for d in numberToBase(data, len(words))]
     print(f"{len(bip39)} words")
     return bip39
 
-
 def fromBIP(phrase):
-    words = readWords()
-    return "FROMBIP"
-
+    wordmap = {w:n for n,w in enumerate(readWords())}
+    dint = toInteger([wordmap[w] for w in phrase], len(wordmap))
+    bs = dint.to_bytes((dint.bit_length() + 7) // 8, 'little')
+    return bs.decode('ascii')
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
